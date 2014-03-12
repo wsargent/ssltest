@@ -6,7 +6,6 @@
 
 
 import akka.util.Timeout
-import play.api.libs.ws.ssl.debug.DebugConfiguration
 import scala.concurrent.duration._
 
 import play.api.test._
@@ -14,12 +13,31 @@ import scala.util.control.NonFatal
 import com.typesafe.config.ConfigFactory
 import play.api.libs.ws._
 import play.api.libs.ws.ssl._
+import play.api.libs.ws.ssl.debug._
 import play.api.libs.ws.ning._
-import scala.util.{Failure, Success, Try}
 
 object SSLSpec extends PlaySpecification {
 
   val timeout: Timeout = 20.seconds
+
+  // Loggers not needed, but useful to doublecheck that the code is doing what it should.
+  // ./build test-only play.api.libs.ws.ssl.debug.DebugConfigurationSpec
+  val internalDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug.FixInternalDebugLogging")
+  val certpathDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug.FixCertpathDebugLogging")
+
+  def setLoggerDebug(slf4jLogger: org.slf4j.Logger) {
+    val logbackLogger = slf4jLogger.asInstanceOf[ch.qos.logback.classic.Logger]
+    logbackLogger.setLevel(ch.qos.logback.classic.Level.DEBUG)
+  }
+
+  def createClient(rawConfig:play.api.Configuration) : WSClient = {
+    val parser = new DefaultWSConfigParser(rawConfig)
+    val clientConfig = parser.parse()
+    clientConfig.ssl.map { _.debug.map(new DebugConfiguration().configure) }
+    val builder = new NingAsyncHttpClientConfigBuilder(clientConfig)
+    val client = new NingWSClient(builder.build())
+    client
+  }
 
   "WS" should {
 
@@ -29,13 +47,12 @@ object SSLSpec extends PlaySpecification {
       val json = play.api.libs.json.Json.toJson("kip")
 
       val result = try {
-        val configuration = play.api.Configuration(ConfigFactory.load(
+        val rawConfig = play.api.Configuration(ConfigFactory.parseString(
           """
             |ws.ssl.loose.disableCheckRevocation=true
           """.stripMargin))
-        val parser = new DefaultWSConfigParser(configuration)
-        val builder = new NingAsyncHttpClientConfigBuilder(parser.parse())
-        val client = new NingWSClient(builder.build())
+        val client = createClient(rawConfig)
+
         val response = client.url("https://example.com")
         success
       } catch {
@@ -46,68 +63,18 @@ object SSLSpec extends PlaySpecification {
     }
 
     "connect to a remote server" in {
-      val rawConfig = play.api.Configuration(ConfigFactory.load(
+      val rawConfig = play.api.Configuration(ConfigFactory.parseString(
         """
-          |ws.ssl.debug = ["ssl"]
-          |
-          |logger.certpath=DEBUG
-          |logger=DEBUG
         """.stripMargin))
 
-      val parser = new DefaultWSConfigParser(rawConfig)
-      val clientConfig : WSClientConfig = parser.parse()
-      clientConfig.ssl.map { _.debug.map(new DebugConfiguration().configure) }
-      val builder = new NingAsyncHttpClientConfigBuilder(clientConfig)
-      val client = new NingWSClient(builder.build())
+      val client = createClient(rawConfig)
 
       val response = await(client.url("https://www.howsmyssl.com/a/check").get())(timeout)
       println(response.json)
       // jsonOutput.must(beMatching("awesomeness!"))
       response.status must be_==(200)
-
     }
 
-    "connect to cacert.org server" in {
-
-      val result = Try {
-        val rawConfig = play.api.Configuration(ConfigFactory.load(
-          """ws.ssl {
-            |  disabledAlgorithms = "MD2"
-            |  loose {
-            |    disableCheckRevocation = true
-            |  }
-            |  trustManager = {
-            |    stores = [
-            |      { type: "JKS", path: "./keys/cacert-root-md5.crt" }
-            |    ]
-            |  }
-            |}
-          """.stripMargin))
-
-        val parser = new DefaultWSConfigParser(rawConfig)
-        val clientConfig = parser.parse()
-        val builder = new NingAsyncHttpClientConfigBuilder(clientConfig)
-        val client = new NingWSClient(builder.build())
-
-        await(client.url("https://doc.to/create-x509-certs-in-java").get())(timeout)
-      }
-
-      result match {
-        case Success(response) =>
-          success
-
-        case Failure(fail) =>
-          fail.printStackTrace()
-          CompositeCertificateException.unwrap(fail) {
-            case certEx: java.security.cert.CertPathValidatorException =>
-              //println(s"reason = ${certEx}")
-              certEx.printStackTrace()
-            case NonFatal(generalEx) =>
-            //generalEx.printStackTrace()
-          }
-          failure
-      }
-    }
 
     "connect to expired certificate" in {
 
@@ -116,14 +83,13 @@ object SSLSpec extends PlaySpecification {
       var count = 0
       var succeeded = false
       try {
-        val rawConfig = play.api.Configuration(ConfigFactory.load(
+        val rawConfig = play.api.Configuration(ConfigFactory.parseString(
           """ws.ssl {
             |}
           """.stripMargin))
 
-        val parser = new DefaultWSConfigParser(rawConfig)
-        val builder = new NingAsyncHttpClientConfigBuilder(parser.parse())
-        val client = new NingWSClient(builder.build())
+        val client = createClient(rawConfig)
+
         val body = await(client.url("https://doctivity.io/").get())(timeout).body
         failure
       } catch {
@@ -150,7 +116,7 @@ object SSLSpec extends PlaySpecification {
 
       var count = 0
       try {
-        val rawConfig = play.api.Configuration(ConfigFactory.load(
+        val rawConfig = play.api.Configuration(ConfigFactory.parseString(
           """ws.ssl {
             | debug = [ "certpath" ]
             |}

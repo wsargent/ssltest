@@ -10,6 +10,7 @@ object Application extends Controller {
   def index = Action.async {
     WS.url("https://www.howsmyssl.com/a/check").get().map { response =>
       val json = response.json
+      //val rating = (json \ "rating").as[String]
       Ok(json)
     }
   }

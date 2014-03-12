@@ -17,13 +17,11 @@
 
     <logger name="play" level="INFO" />
     <logger name="application" level="INFO" />
-    <logger name="com.ning.http.client" level="INFO" />
+    <logger name="com.ning.http.client" level="DEBUG" />
 
-    <logger name="play.api.libs.ws" level="DEBUG" />
-    <logger name="javax.net.debug" level="DEBUG" />
-    <logger name="java.security.debug" level="DEBUG" />
+    <!-- logger name="play.api.libs.ws" level="DEBUG" -->
 
-    <root level="ERROR">
+    <root level="WARN">
         <appender-ref ref="STDOUT" />
         <appender-ref ref="FILE" />
     </root>
