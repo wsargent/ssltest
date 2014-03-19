@@ -35,12 +35,7 @@ class CACertSpec extends PlaySpecification {
   "connect to cacert.org server" in {
 
     val rawConfig = """ws.ssl {
-                      |  debug = ["ssl", "certpath"]
-                      |
-                      |  disabledAlgorithms = "MD2"
-                      |  loose {
-                      |    disableCheckRevocation = true
-                      |  }
+                      |  checkRevocation = false
                       |  trustManager = {
                       |    stores = [
                       |      { type: "PEM", path: "./certs/root.crt" }
