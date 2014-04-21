@@ -4,6 +4,7 @@
  *
  */
 
+import java.security.Security
 import play.api.libs.json.JsSuccess
 
 
@@ -13,7 +14,7 @@ import scala.concurrent.duration._
 import play.api.test._
 import com.typesafe.config.ConfigFactory
 
-class HowsMySSLSpec extends PlaySpecification with CommonMethods {
+class HowsMySSLSpec extends PlaySpecification with ClientMethods {
 
   val timeout: Timeout = 20.seconds
 
@@ -22,6 +23,7 @@ class HowsMySSLSpec extends PlaySpecification with CommonMethods {
     "connect to a remote server" in {
       val rawConfig = play.api.Configuration(ConfigFactory.parseString(
         """
+          |ws.ssl.debug=["ssl", "handshake"]
           |ws.ssl.checkRevocation=true
         """.stripMargin))
 

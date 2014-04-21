@@ -1,0 +1,52 @@
+#!/bin/bash
+
+APPDIR=/Users/wsargent/work/ssltest/
+ACTIVATOR=/usr/local/bin/activator
+
+# Preferable not to set this on the command line, but for demo purposes this is fine.
+KEY_PASSWORD=`cat $APPDIR/certs/password`
+
+# Turn off plain HTTP, turn on HTTPS
+# This should be https://example.com:9443
+JVM_OPTIONS="$JVM_OPTIONS -Dhttp.port=disabled"
+JVM_OPTIONS="$JVM_OPTIONS -Dhttps.port=9443"
+
+# All of the HTTPS parameters are defined in the following:
+#
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#InstallationAndCustomization
+
+JVM_OPTIONS="$JVM_OPTIONS -Dplay.http.sslcontextprovider=MySSLProvider"
+JVM_OPTIONS="$JVM_OPTIONS -Dplay.http.sslengineprovider=MySSLProvider"
+
+# Enable the handshake parameter to be extended for better protection.
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#customizing_dh_keys
+JVM_OPTIONS="$JVM_OPTIONS -Djdk.tls.ephemeralDHKeySize=2048"
+
+# Don't allow client to dictate terms - this can also be used for DoS attacks.
+# Undocumented!
+JVM_OPTIONS="$JVM_OPTIONS -Djdk.tls.rejectClientInitiatedRenegotiation=true"
+
+# Add more details to the disabled algorithms list
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#DisabledAlgorithms
+#JVM_OPTIONS="$JVM_OPTIONS -Djava.security.properties=disabledAlgorithms.properties"
+
+# Tighten the TLS negotiation issue.
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#descPhase2
+JVM_OPTIONS="$JVM_OPTIONS -Dsun.security.ssl.allowUnsafeRenegotiation=false"
+JVM_OPTIONS="$JVM_OPTIONS -Dsun.security.ssl.allowLegacyHelloMessages=false"
+
+# Enable this if you need to use OCSP or CRL
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/certpath/CertPathProgGuide.html#AppC
+#JVM_OPTIONS="$JVM_OPTIONS -Dcom.sun.security.enableCRLDP=true"
+#JVM_OPTIONS="$JVM_OPTIONS -Dcom.sun.net.ssl.checkRevocation=true"
+
+# Enable this if you need TLS debugging
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html#Debug
+JVM_OPTIONS="$JVM_OPTIONS -Djavax.net.debug=ssl:handshake"
+
+# Change this if you need X.509 certificate debugging
+# http://docs.oracle.com/javase/8/docs/technotes/guides/security/troubleshooting-security.html
+#JVM_OPTIONS="$JVM_OPTIONS -Djava.security.debug=certpath:x509:ocsp"
+
+# Run Play
+$ACTIVATOR $JVM_OPTIONS $*;

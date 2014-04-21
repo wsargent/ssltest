@@ -19,8 +19,10 @@
     <logger name="application" level="INFO" />
     <logger name="com.ning.http.client" level="INFO" />
 
-    <logger name="play.api.libs.ws.ssl.AlgorithmChecker" level="INFO" />
-    <logger name="play.api.libs.ws.ssl" level="INFO" />
+    <logger name="play.api.libs.ws.ssl.AlgorithmChecker" level="DEBUG" />
+    <logger name="play.api.libs.ws.ssl" level="DEBUG" />
+
+    <logger name="play.ssl" level="DEBUG" />
 
     <root level="WARN">
         <appender-ref ref="STDOUT" />

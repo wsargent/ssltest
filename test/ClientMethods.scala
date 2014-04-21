@@ -1,4 +1,5 @@
 import com.typesafe.config.ConfigFactory
+import java.security.Security
 import play.api.libs.ws.ning.{NingWSClient, NingAsyncHttpClientConfigBuilder}
 import play.api.libs.ws.ssl.debug.DebugConfiguration
 import play.api.libs.ws.{DefaultWSConfigParser, WSClient}
@@ -9,7 +10,7 @@ import play.api.libs.ws.{DefaultWSConfigParser, WSClient}
  *
  */
 
-trait CommonMethods {
+trait ClientMethods {
 
   def createClient(rawConfig: play.api.Configuration): WSClient = {
     val parser = new DefaultWSConfigParser(rawConfig)

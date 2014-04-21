@@ -1,3 +1,6 @@
+import play.PlayImport.PlayKeys
+import play.PlayScala
+
 name := "ssltest"
 
 version := "1.0-SNAPSHOT"
@@ -6,6 +9,8 @@ libraryDependencies ++= Seq(
   ws
 )
 
-// scalacOptions += "-target:jvm-1.8"
+// Keys.fork in (Test,run) := true
 
-play.Project.playScalaSettings
+javaOptions in Test ++= Seq("-Dcom.sun.security.enableCRLDP=true", "-Dcom.sun.net.ssl.checkRevocation=true", "-Djavax.net.debug=off")
+
+lazy val root = (project in file(".")).addPlugins(PlayScala)

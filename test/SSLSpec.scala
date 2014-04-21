@@ -17,33 +17,11 @@ import play.api.libs.ws.ssl._
 import play.api.libs.ws.ssl.debug._
 import play.api.libs.ws.ning._
 
-object SSLSpec extends PlaySpecification with CommonMethods {
+object SSLSpec extends PlaySpecification with ClientMethods {
 
   val timeout: Timeout = 20.seconds
 
   "WS" should {
-
-    // test SNI: https://sni.velox.ch/
-
-    "use a custom server" in {
-      val json = play.api.libs.json.Json.toJson("kip")
-
-      val result = try {
-        val rawConfig = play.api.Configuration(ConfigFactory.parseString(
-          """
-            |ws.ssl.checkRevocation=false
-          """.stripMargin))
-        val client = createClient(rawConfig)
-
-        val response = client.url("https://example.com")
-        success
-      } catch {
-        case NonFatal(e) =>
-          failure
-      }
-      result
-    }
-
 
     "connect to expired certificate" in {
 

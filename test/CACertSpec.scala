@@ -19,13 +19,13 @@ class CACertSpec extends PlaySpecification {
 
   // Loggers not needed, but useful to doublecheck that the code is doing what it should.
   // play test-only CACertSpec
-  //  val internalDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug.FixInternalDebugLogging")
-  //  val certpathDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug.FixCertpathDebugLogging")
-  //
-  //  def setLoggerDebug(slf4jLogger: org.slf4j.Logger) {
-  //    val logbackLogger = slf4jLogger.asInstanceOf[ch.qos.logback.classic.Logger]
-  //    logbackLogger.setLevel(ch.qos.logback.classic.Level.DEBUG)
-  //  }
+  val internalDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug")
+  //val certpathDebugLogger = org.slf4j.LoggerFactory.getLogger("play.api.libs.ws.ssl.debug.FixCertpathDebugLogging")
+
+  def setLoggerDebug(slf4jLogger: org.slf4j.Logger) {
+    val logbackLogger = slf4jLogger.asInstanceOf[ch.qos.logback.classic.Logger]
+    logbackLogger.setLevel(ch.qos.logback.classic.Level.DEBUG)
+  }
 
   def configToMap(configString: String): Map[String, _] = {
     import scala.collection.JavaConverters._
@@ -33,6 +33,8 @@ class CACertSpec extends PlaySpecification {
   }
 
   "connect to cacert.org server" in {
+
+    java.security.Security.setProperty("jdk.certpath.disabledAlgorithms", "MD2, MD5")
 
     val rawConfig = """ws.ssl {
                       |  checkRevocation = false
